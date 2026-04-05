@@ -2,7 +2,7 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "python manage.py migrate && gunicorn bszone_backend.wsgi"
+startCommand = "python manage.py migrate && gunicorn bszone_backend.wsgi --bind 0.0.0.0:$PORT"
 healthcheckPath = "/health"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
