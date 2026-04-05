@@ -1,6 +1,6 @@
 import json
 import secrets
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.hashers import check_password
@@ -25,6 +25,10 @@ def _parse_json(request):
 
 
 def _serialize_employee(employee: Employee):
+    joined_on = employee.joined_on
+    if isinstance(joined_on, str):
+        joined_on = date.fromisoformat(joined_on)
+
     return {
         "id": str(employee.id),
         "employeeCode": employee.employee_code,
@@ -33,12 +37,16 @@ def _serialize_employee(employee: Employee):
         "designation": employee.designation,
         "email": employee.email,
         "phoneNumber": employee.phone_number,
-        "joinedOn": employee.joined_on.isoformat(),
+        "joinedOn": joined_on.isoformat(),
     }
 
 
 def _serialize_attendance(record: AttendanceRecord):
     employee = record.employee
+    attendance_date = record.attendance_date
+    if isinstance(attendance_date, str):
+        attendance_date = date.fromisoformat(attendance_date)
+
     return {
         "id": str(record.id),
         "employeeId": str(employee.id),
@@ -46,7 +54,7 @@ def _serialize_attendance(record: AttendanceRecord):
         "employeeName": employee.full_name,
         "department": employee.department,
         "designation": employee.designation,
-        "date": record.attendance_date.isoformat(),
+        "date": attendance_date.isoformat(),
         "status": record.status,
         "workedHours": float(record.worked_hours),
         "checkIn": record.check_in,
@@ -156,6 +164,11 @@ def employees(request):
         return api_error("A valid email is required", 400)
 
     try:
+        joined_on = date.fromisoformat(str(payload["joinedOn"]).strip())
+    except ValueError:
+        return api_error("joinedOn must be a valid date in YYYY-MM-DD format", 400)
+
+    try:
         employee = Employee.objects.create(
             employee_code=str(payload["employeeCode"]).strip(),
             full_name=str(payload["fullName"]).strip(),
@@ -163,7 +176,7 @@ def employees(request):
             designation=str(payload["designation"]).strip(),
             email=str(payload["email"]).strip(),
             phone_number=str(payload["phoneNumber"]).strip(),
-            joined_on=str(payload["joinedOn"]).strip(),
+            joined_on=joined_on,
         )
     except IntegrityError:
         return api_error("Employee code or email already exists", 409)
@@ -219,9 +232,14 @@ def mark_attendance(request):
         return api_error("Selected employee was not found", 404)
 
     try:
+        attendance_date = date.fromisoformat(str(payload.get("date", "")).strip())
+    except ValueError:
+        return api_error("date must be a valid date in YYYY-MM-DD format", 400)
+
+    try:
         record = AttendanceRecord.objects.create(
             employee=employee,
-            attendance_date=str(payload.get("date", "")).strip(),
+            attendance_date=attendance_date,
             status=str(payload.get("status", "")).strip(),
             worked_hours=Decimal(str(payload.get("workedHours", "0"))),
             check_in=str(payload.get("checkIn", "")).strip(),
