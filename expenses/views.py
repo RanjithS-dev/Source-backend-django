@@ -1,0 +1,18 @@
+from rest_framework import viewsets
+
+from common.permissions import IsAdminOrSupervisorOrReadOnly
+
+from .models import Expense
+from .serializers import ExpenseSerializer
+
+
+class ExpenseViewSet(viewsets.ModelViewSet):
+    queryset = Expense.objects.select_related("land", "employee", "vehicle", "worklog").all().order_by(
+        "-expense_date",
+        "-created_at",
+    )
+    serializer_class = ExpenseSerializer
+    permission_classes = [IsAdminOrSupervisorOrReadOnly]
+    filterset_fields = ["expense_type", "expense_date", "land", "employee", "vehicle", "worklog"]
+    search_fields = ["notes", "land__name", "employee__full_name", "vehicle__registration_number"]
+    ordering_fields = ["expense_date", "amount", "created_at"]

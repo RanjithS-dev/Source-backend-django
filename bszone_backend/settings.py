@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import shutil
+from datetime import timedelta
 from urllib.parse import urlsplit
 
 import dj_database_url
@@ -100,6 +101,7 @@ CSRF_TRUSTED_ORIGINS = unique(
     ]
 )
 CORS_ALLOWED_ORIGINS = frontend_origins
+CORS_ALLOW_CREDENTIALS = True
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -110,6 +112,16 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "django_filters",
+    "common",
+    "users",
+    "land",
+    "employee",
+    "worklog",
+    "vehicle",
+    "sales",
+    "expenses",
     "core",
 ]
 
@@ -172,6 +184,30 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = []
 
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+    "DEFAULT_FILTER_BACKENDS": (
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ),
+    "DEFAULT_PAGINATION_CLASS": "common.pagination.StandardResultsSetPagination",
+    "PAGE_SIZE": 20,
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=8),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": False,
+}
+
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -181,5 +217,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
