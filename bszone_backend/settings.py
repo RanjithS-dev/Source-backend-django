@@ -5,16 +5,39 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def load_dotenv(path: Path) -> None:
+    if not path.exists():
+        return
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[7:].strip()
+        if "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+
+
+load_dotenv(BASE_DIR / ".env")
+
+
+def csv_env(name: str, default: str) -> list[str]:
+    return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
+
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-dev-secret-key")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = ["*"]
-CSRF_TRUSTED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", os.getenv("FRONTEND_URL", "http://localhost:3000")).split(",")
-    if origin.strip()
-]
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("FRONTEND_URL", "http://localhost:3000").split(",") if origin.strip()]
+ALLOWED_HOSTS = csv_env("DJANGO_ALLOWED_HOSTS", "*")
+CSRF_TRUSTED_ORIGINS = csv_env(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    os.getenv("FRONTEND_URL", "http://localhost:3000"),
+)
+CORS_ALLOWED_ORIGINS = csv_env("FRONTEND_URL", "http://localhost:3000")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
