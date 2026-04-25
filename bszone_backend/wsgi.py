@@ -2,7 +2,7 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "srk_backend.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bszone_backend.settings")
 
 django_application = get_wsgi_application()
 

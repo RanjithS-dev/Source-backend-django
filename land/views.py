@@ -18,6 +18,11 @@ class LandViewSet(SafeModelViewSet):
     queryset = Land.objects.select_related("owner").all().order_by("name")
     serializer_class = LandSerializer
     permission_classes = [IsAdminOrSupervisorOrReadOnly]
-    filterset_fields = ["owner", "village", "is_active"]
+    filterset_fields = {
+        "owner": ["exact"],
+        "village": ["exact"],
+        "is_active": ["exact"],
+        "lease_start_date": ["exact", "gte", "lte"],
+    }
     search_fields = ["name", "village", "owner__name"]
     ordering_fields = ["name", "lease_start_date", "lease_end_date", "lease_amount", "tree_count", "created_at"]
