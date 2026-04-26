@@ -24,6 +24,7 @@ class Land(BaseModel):
     lease_start_date = models.DateField()
     lease_end_date = models.DateField()
     lease_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    agreed_emi_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Amount to be paid per installment")
     tree_count = models.PositiveIntegerField(default=0)
     lease_notes = models.TextField(blank=True)
     is_active = models.BooleanField(default=True, db_index=True)
@@ -37,3 +38,26 @@ class Land(BaseModel):
 
     def __str__(self) -> str:
         return self.name
+
+
+class LandLeasePayment(BaseModel):
+    PAYMENT_TYPES = (
+        ("advance", "Advance"),
+        ("emi", "EMI Installment"),
+        ("other", "Other"),
+    )
+
+    land = models.ForeignKey(Land, on_delete=models.CASCADE, related_name="payments")
+    payment_date = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPES, default="emi")
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-payment_date", "-created_at"]
+        indexes = [
+            models.Index(fields=["land", "payment_date"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.land.name} - {self.get_payment_type_display()} - {self.amount}"
