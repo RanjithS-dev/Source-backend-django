@@ -93,18 +93,18 @@ allowed_hosts = unique(
     + vercel_hosts
 )
 ALLOWED_HOSTS = allowed_hosts or ["*"]
+
+# Always include FRONTEND_URL origins, then any extras from DJANGO_CSRF_TRUSTED_ORIGINS.
+# (If CSRF used only the latter when set, the real app URL could be missing → 403 on POST.)
+csrf_extra_origins = unique(
+    normalize_origin(item) for item in csv_env("DJANGO_CSRF_TRUSTED_ORIGINS", "")
+)
+csrf_trusted_core = unique(frontend_origins + csrf_extra_origins)
 CSRF_TRUSTED_ORIGINS = unique(
-    [
-        normalize_origin(item)
-        for item in csv_env(
-            "DJANGO_CSRF_TRUSTED_ORIGINS",
-            ",".join(frontend_origins) or "http://localhost:3000",
-        )
-    ]
+    csrf_trusted_core
     + [
         "http://localhost:3000",
-        "https://*.vercel.app",
-        "https://source-backend-django.vercel.app"
+        "https://source-backend-django.vercel.app",
     ]
 )
 CORS_ALLOWED_ORIGINS = unique(frontend_origins + ["http://localhost:3000"])
