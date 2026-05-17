@@ -181,8 +181,24 @@ def default_database_url() -> str:
     return f"sqlite:///{bundled_sqlite_path}"
 
 
+import socket
+
 database_url = os.getenv("DATABASE_URL", default_database_url())
 database_config = dj_database_url.parse(database_url, conn_max_age=600)
+
+if database_config.get("ENGINE") != "django.db.backends.sqlite3":
+    # Validate that the database host is online and accepting connections before trying to use it
+    host = database_config.get("HOST")
+    port = database_config.get("PORT")
+    try:
+        port_num = int(port) if port else 5432
+        with socket.create_connection((host, port_num), timeout=1.5):
+            pass
+    except Exception:
+        # Fallback to local SQLite database if the live Postgres database is suspended or offline
+        database_url = default_database_url()
+        database_config = dj_database_url.parse(database_url)
+
 if database_config.get("ENGINE") != "django.db.backends.sqlite3" and not DEBUG:
     database_config.setdefault("OPTIONS", {})
     database_config["OPTIONS"]["sslmode"] = "require"
@@ -232,17 +248,23 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# --- Firebase (optional): import only if key is present (avoids any firebase/google noise during Vercel build) ---
+# --- Firebase (optional): import only if key is present or env var is set (avoids any firebase/google noise during Vercel build) ---
 FIREBASE_KEY_PATH = BASE_DIR / "serviceAccountKey.json"
+firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS")
 db = None
 
-if FIREBASE_KEY_PATH.exists():
+if FIREBASE_KEY_PATH.exists() or firebase_creds_json:
     import firebase_admin
     from firebase_admin import credentials, firestore
 
     try:
         if not firebase_admin._apps:
-            cred = credentials.Certificate(str(FIREBASE_KEY_PATH))
+            if firebase_creds_json:
+                import json
+                creds_dict = json.loads(firebase_creds_json)
+                cred = credentials.Certificate(creds_dict)
+            else:
+                cred = credentials.Certificate(str(FIREBASE_KEY_PATH))
             firebase_admin.initialize_app(cred)
         db = firestore.client()
     except Exception:
