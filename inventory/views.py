@@ -23,8 +23,8 @@ class StoreViewSet(viewsets.ModelViewSet):
 class GRNFilter(filters.FilterSet):
     receipt_date__gte = filters.DateFilter(field_name="receipt_date", lookup_expr="gte")
     receipt_date__lte = filters.DateFilter(field_name="receipt_date", lookup_expr="lte")
-    store = filters.UUIDFilter(field_name="store__id")
-    worklog = filters.UUIDFilter(field_name="worklog__id")
+    store = filters.NumberFilter(field_name="store__id")
+    worklog = filters.NumberFilter(field_name="worklog__id")
 
     class Meta:
         model = GRN
