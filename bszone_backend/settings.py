@@ -174,7 +174,9 @@ def default_database_url() -> str:
     # into /tmp so login and demo writes can still work during deployment previews.
     if str(BASE_DIR).startswith("/var/task") and Path("/tmp").exists():
         runtime_sqlite_path = Path("/tmp") / bundled_sqlite_path.name
-        if bundled_sqlite_path.exists() and not runtime_sqlite_path.exists():
+        # Always overwrite: a warm Lambda instance may carry a stale /tmp/db.sqlite3
+        # from a previous deployment that has no tables. The bundled db is authoritative.
+        if bundled_sqlite_path.exists():
             shutil.copyfile(bundled_sqlite_path, runtime_sqlite_path)
         return f"sqlite:///{runtime_sqlite_path}"
 

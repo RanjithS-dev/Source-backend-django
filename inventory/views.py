@@ -1,6 +1,6 @@
-from rest_framework import viewsets
 from django_filters import rest_framework as filters
 
+from common.api import SafeModelViewSet
 from .models import Store, GRN
 from .serializers import StoreSerializer, GRNSerializer
 
@@ -13,7 +13,7 @@ class StoreFilter(filters.FilterSet):
         fields = ["name", "is_active"]
 
 
-class StoreViewSet(viewsets.ModelViewSet):
+class StoreViewSet(SafeModelViewSet):
     queryset = Store.objects.all().order_by("name")
     serializer_class = StoreSerializer
     filterset_class = StoreFilter
@@ -31,7 +31,7 @@ class GRNFilter(filters.FilterSet):
         fields = ["store", "worklog"]
 
 
-class GRNViewSet(viewsets.ModelViewSet):
+class GRNViewSet(SafeModelViewSet):
     queryset = GRN.objects.select_related("store", "worklog", "vehicle").all().order_by("-receipt_date", "-created_at")
     serializer_class = GRNSerializer
     filterset_class = GRNFilter
