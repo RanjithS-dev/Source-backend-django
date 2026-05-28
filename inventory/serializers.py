@@ -29,8 +29,8 @@ class GRNSerializer(serializers.ModelSerializer):
         source="store", queryset=Store.objects.all(), write_only=True
     )
     store = StoreSerializer(read_only=True)
-    
-    # We allow linking a WorkLog and a Vehicle, but they are optional
+
+    # Write-only FK fields for creating/updating
     worklog_id = serializers.PrimaryKeyRelatedField(
         source="worklog", queryset=WorkLog.objects.all(), write_only=True, required=False, allow_null=True
     )
@@ -38,16 +38,22 @@ class GRNSerializer(serializers.ModelSerializer):
         source="vehicle", queryset=Vehicle.objects.all(), write_only=True, required=False, allow_null=True
     )
 
+    # Read-only nested objects returned in responses
+    vehicle = VehicleSerializer(read_only=True)
+    worklog = WorkLogSerializer(read_only=True)
+
     class Meta:
         model = GRN
         fields = [
             "id",
             "store",
             "store_id",
+            "worklog",
             "worklog_id",
             "receipt_date",
             "coconut_count",
             "bag_count",
+            "vehicle",
             "vehicle_id",
             "notes",
             "created_at",
