@@ -33,4 +33,14 @@ else
     echo ">>>          Login will fail until you create a user. See README.md."
 fi
 
+if [ -n "${BOOTSTRAP_ADMIN2_USERNAME}" ] && [ -n "${BOOTSTRAP_ADMIN2_PASSWORD}" ]; then
+    echo ">>> Bootstrapping second admin user: ${BOOTSTRAP_ADMIN2_USERNAME}"
+    python manage.py bootstrap_admin \
+        --username "${BOOTSTRAP_ADMIN2_USERNAME}" \
+        --password "${BOOTSTRAP_ADMIN2_PASSWORD}" \
+        --email "${BOOTSTRAP_ADMIN2_EMAIL:-}" \
+        --full-name "${BOOTSTRAP_ADMIN2_FULL_NAME:-Workspace Admin}"
+    echo ">>> Second admin user ready."
+fi
+
 echo ">>> Build complete."
