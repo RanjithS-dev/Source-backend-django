@@ -75,7 +75,35 @@ def diag_view(request):
         diag_data["firebase_app_init"] = "FAILED"
         diag_data["firebase_error"] = str(e)
         diag_data["firebase_trace"] = traceback.format_exc()
-        
+
+    # 5. Check DB tables and user count
+    try:
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+            tables = [row[0] for row in cursor.fetchall()]
+        diag_data["db_tables"] = tables
+    except Exception as e:
+        diag_data["db_tables_error"] = str(e)
+
+    try:
+        from django.contrib.auth.models import User
+        diag_data["user_count"] = User.objects.count()
+        diag_data["users"] = list(User.objects.values_list("username", flat=True))
+    except Exception as e:
+        diag_data["user_count_error"] = str(e)
+
+    # 6. Test login serializer directly
+    try:
+        from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+        s = TokenObtainPairSerializer(data={"username": "testdiag", "password": "testdiag"})
+        s.is_valid()
+        diag_data["serializer_check"] = "OK"
+    except Exception as e:
+        diag_data["serializer_check"] = "FAILED"
+        diag_data["serializer_error"] = str(e)
+        diag_data["serializer_trace"] = traceback.format_exc()
+
     return JsonResponse(diag_data)
 
 urlpatterns = [
